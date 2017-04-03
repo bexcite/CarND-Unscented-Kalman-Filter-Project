@@ -160,14 +160,14 @@ int main(int argc, char* argv[]) {
 
 
   // DEBUG time - reduce number of measurements
-//  number_of_measurements = 100;
+//  number_of_measurements = 20;
 
   // Formatter for Vectors
   Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", "");
 
   for (size_t k = 0; k < number_of_measurements; ++k) {
 
-    std::cout << "MR = " << measurement_pack_list[k] << std::endl;
+    std::cout << k << ": MR = " << measurement_pack_list[k] << std::endl;
 
     // Call the UKF-based fusion
     ukf.ProcessMeasurement(measurement_pack_list[k]);

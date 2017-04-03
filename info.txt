@@ -2,6 +2,9 @@
 Unscented Kalman Filter Project Formulas
 https://paper.dropbox.com/doc/Unscented-Kalman-Filter-Project-HWZtN7Ak9Ys7ThiScHh1K
 
+https://discussions.udacity.com/t/numerical-instability-of-the-implementation/230449/9
+
 TODO:
-- make initial state vector
+- make it works for data-2 file
+- NIS exploration
 -

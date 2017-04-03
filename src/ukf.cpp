@@ -106,7 +106,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
     x_.setZero();
 
-    float v_var = 1000;
+    float v_var = 1;
     if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
       x_(0) = meas_package.raw_measurements_(0);
       x_(1) = meas_package.raw_measurements_(0);
@@ -123,8 +123,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     P_ << 0.5,     0,   0,       0,     0,
             0,   0.5,   0,       0,     0,
             0,     0,   v_var,   0,     0,
-            0,     0,   0,     100,     0,
-            0,     0,   0,       0,   100;
+            0,     0,   0,       0.5,   0,
+            0,     0,   0,       0,     0.5;
 
     std::cout << "First Measurement Initialized:" << std::endl;
     std::cout << "x_ = " << x_.format(fmt) << std::endl;
@@ -142,6 +142,12 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
   std::cout << "delta_t = " << delta_t << " secs" << std::endl;
 
+  while (delta_t > 0.1) {
+//    std::cout << "====== small step ======" << std::endl;
+    const double dt = 0.05;
+    Prediction(dt);
+    delta_t -= dt;
+  }
   Prediction(delta_t);
 
   if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
@@ -215,8 +221,8 @@ void UKF::Prediction(double delta_t) {
 
 
   // Normalize angles
-  while (Xsig_aug(3) < -M_PI) Xsig_aug(3) += M_PI;
-  while (Xsig_aug(3) > M_PI) Xsig_aug(3) -= M_PI;
+  while (Xsig_aug(3) < -M_PI) Xsig_aug(3) += 2. * M_PI;
+  while (Xsig_aug(3) > M_PI) Xsig_aug(3) -= 2. * M_PI;
 
 
   // Sigma Point Prediction
@@ -228,6 +234,7 @@ void UKF::Prediction(double delta_t) {
 
   for (int c = 0; c < 2 * n_aug_ + 1; ++c) {
     VectorXd sp = Xsig_aug.col(c);
+//    std::cout << "sp = " << sp.format(fmt) << std::endl;
     double v = sp[2];
     double psi = sp[3];
     double psi_dot = sp[4];
@@ -257,12 +264,12 @@ void UKF::Prediction(double delta_t) {
     s_pred(4) = sp(4) + delta_t * std_yawdd;
 
     // Normalize angles
-    while (s_pred(3) < -M_PI) s_pred(3) += M_PI;
-    while (s_pred(3) > M_PI) s_pred(3) -= M_PI;
+    while (s_pred(3) < -M_PI) s_pred(3) += 2. * M_PI;
+    while (s_pred(3) > M_PI) s_pred(3) -= 2. * M_PI;
 
     // << End - Predict Sigma Point
 
-//    std::cout << "s_pred = " << std::endl << s_pred << std::endl;
+//    std::cout << "s_pred[" << c << "] = " << std::endl << s_pred << std::endl;
 
     Xsig_pred_.col(c) = s_pred;
 
@@ -272,8 +279,8 @@ void UKF::Prediction(double delta_t) {
   }
 
   // Normalize angles
-  while (x(3) < -M_PI) x(3) += M_PI;
-  while (x(3) > M_PI) x(3) -= M_PI;
+  while (x(3) < -M_PI) x(3) += 2. * M_PI;
+  while (x(3) > M_PI) x(3) -= 2. * M_PI;
 
 //  std::cout << "Xsig_pred = " << std::endl << Xsig_pred_.format(fmtm) << std::endl;
 
@@ -288,8 +295,8 @@ void UKF::Prediction(double delta_t) {
     VectorXd diffVec = Xsig_pred_.col(i) - x;
 
     // Normalize angles
-    while (diffVec(3) < -M_PI) diffVec(3) += M_PI;
-    while (diffVec(3) > M_PI) diffVec(3) -= M_PI;
+    while (diffVec(3) < -M_PI) diffVec(3) += 2. * M_PI;
+    while (diffVec(3) > M_PI) diffVec(3) -= 2. * M_PI;
 
     P += weights_(i) * (diffVec * diffVec.transpose());
   }
@@ -379,10 +386,13 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   std::cout << "K = " << std::endl << K.format(fmtm) << std::endl;
 
   // Update state and covariance
-  x_ += K * (z - Z_pred);
+  VectorXd y = z - Z_pred;
+  x_ += K * y;
   P_ -= K * S * K.transpose();
 
-  std::cout << " <<<<< UpdateLidar ENDS ---- " << std::endl;
+  NIS_laser_ = y.transpose() * Si * y;
+
+  std::cout << "<<<<< UpdateLidar ENDS ---- NIS = " << NIS_laser_ << std::endl;
 }
 
 /**
@@ -408,8 +418,8 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   z = meas_package.raw_measurements_;
 
   // Normalize angles
-  while (z(1) < -M_PI) z(1) += M_PI;
-  while (z(1) > M_PI) z(1) -= M_PI;
+  while (z(1) < -M_PI) z(1) += 2. * M_PI;
+  while (z(1) > M_PI) z(1) -= 2. * M_PI;
 
   // Measurement sigma points
   MatrixXd Zsig_pred(n_z, 2 * n_aug_ + 1);
@@ -441,8 +451,8 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   }
 
   // Normalize angles
-  while (Z_pred(1) < -M_PI) Z_pred(1) += M_PI;
-  while (Z_pred(1) > M_PI) Z_pred(1) -= M_PI;
+  while (Z_pred(1) < -M_PI) Z_pred(1) += 2. * M_PI;
+  while (Z_pred(1) > M_PI) Z_pred(1) -= 2. * M_PI;
 
 
 //  std::cout << "Zsig = " << std::endl << Zsig_pred.format(fmtm) << std::endl;
@@ -456,8 +466,8 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     VectorXd diffVec = Zsig_pred.col(i) - Z_pred;
 
     // Normalize angles
-    while (diffVec(1) < -M_PI) diffVec(1) += M_PI;
-    while (diffVec(1) > M_PI) diffVec(1) -= M_PI;
+    while (diffVec(1) < -M_PI) diffVec(1) += 2. * M_PI;
+    while (diffVec(1) > M_PI) diffVec(1) -= 2. * M_PI;
 
     S += weights_(i) * (diffVec * diffVec.transpose());
   }
@@ -475,13 +485,13 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
     VectorXd diffX = Xsig_pred_.col(i) - x_;
     // Normalize angles
-    while (diffX(3) < -M_PI) diffX(3) += M_PI;
-    while (diffX(3) > M_PI) diffX(3) -= M_PI;
+    while (diffX(3) < -M_PI) diffX(3) += 2. * M_PI;
+    while (diffX(3) > M_PI) diffX(3) -= 2. * M_PI;
 
     VectorXd diffZ = Zsig_pred.col(i) - Z_pred;
     // Normalize angles
-    while (diffZ(1) < -M_PI) diffZ(1) += M_PI;
-    while (diffZ(1) > M_PI) diffZ(1) -= M_PI;
+    while (diffZ(1) < -M_PI) diffZ(1) += 2. * M_PI;
+    while (diffZ(1) > M_PI) diffZ(1) -= 2. * M_PI;
 
     Tc += weights_(i) * diffX * diffZ.transpose();
   }
@@ -495,15 +505,23 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   std::cout << "K = " << std::endl << K.format(fmtm) << std::endl;
 
   // Update state and covariance
-  x_ += K * (z - Z_pred);
+  VectorXd y = z - Z_pred;
 
   // Normalize angles
-  while (x_(3) < -M_PI) x_(3) += M_PI;
-  while (x_(3) > M_PI) x_(3) -= M_PI;
+  while (y(1) < -M_PI) y(1) += 2. * M_PI;
+  while (y(1) > M_PI) y(1) -= 2. * M_PI;
+
+  x_ += K * y;
+
+  // Normalize angles
+  while (x_(3) < -M_PI) x_(3) += 2. * M_PI;
+  while (x_(3) > M_PI) x_(3) -= 2. * M_PI;
 
   P_ -= K * S * K.transpose();
 
-  std::cout << " <<<<< UpdateRadar ENDS ---- " << std::endl;
+  NIS_radar_ = y.transpose() * Si * y;
+
+  std::cout << "<<<<< UpdateRadar ENDS ----, NIS = " << NIS_radar_ << std::endl;
 
 
 }
