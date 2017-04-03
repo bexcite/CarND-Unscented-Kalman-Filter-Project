@@ -127,6 +127,9 @@ int main(int argc, char* argv[]) {
       gt_package.gt_values_ = VectorXd(4);
       gt_package.gt_values_ << x_gt, y_gt, vx_gt, vy_gt;
       gt_pack_list.push_back(gt_package);
+
+//      std::cout << "GT = " << gt_package << std::endl;
+//      std::cout << "MP = " << meas_package << std::endl;
   }
 
   // Create a UKF instance
@@ -156,9 +159,21 @@ int main(int argc, char* argv[]) {
   out_file_ << "NIS" << "\n";
 
 
+  // DEBUG time - reduce number of measurements
+//  number_of_measurements = 100;
+
+  // Formatter for Vectors
+  Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", "");
+
   for (size_t k = 0; k < number_of_measurements; ++k) {
+
+    std::cout << "MR = " << measurement_pack_list[k] << std::endl;
+
     // Call the UKF-based fusion
     ukf.ProcessMeasurement(measurement_pack_list[k]);
+
+    std::cout << "GT = " << gt_pack_list[k] << std::endl;
+    std::cout << "=====================================" << std::endl;
 
     // output the estimation
     out_file_ << ukf.x_(0) << "\t"; // pos1 - est

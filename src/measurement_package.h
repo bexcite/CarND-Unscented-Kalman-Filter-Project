@@ -16,4 +16,6 @@ public:
 
 };
 
+std::ostream& operator<<(std::ostream& os, MeasurementPackage const& mp);
+
 #endif /* MEASUREMENT_PACKAGE_H_ */

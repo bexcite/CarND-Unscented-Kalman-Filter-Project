@@ -16,4 +16,6 @@ public:
 
 };
 
+std::ostream& operator<<(std::ostream& os, GroundTruthPackage const& gt);
+
 #endif /* GROUND_TRUTH_PACKAGE_H_ */

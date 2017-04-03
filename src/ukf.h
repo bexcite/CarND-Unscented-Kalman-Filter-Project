@@ -47,6 +47,8 @@ public:
   ///* Laser measurement noise standard deviation position2 in m
   double std_laspy_;
 
+  MatrixXd R_lidar_;
+
   ///* Radar measurement noise standard deviation radius in m
   double std_radr_;
 
@@ -54,7 +56,9 @@ public:
   double std_radphi_;
 
   ///* Radar measurement noise standard deviation radius change in m/s
-  double std_radrd_ ;
+  double std_radrd_;
+
+  MatrixXd R_radar_;
 
   ///* Weights of sigma points
   VectorXd weights_;

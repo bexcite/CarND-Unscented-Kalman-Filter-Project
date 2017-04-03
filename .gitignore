@@ -3,3 +3,6 @@
 
 # build files
 build/
+
+# CLion build files
+cmake-build-debug/
