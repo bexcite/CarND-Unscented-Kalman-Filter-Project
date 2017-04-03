@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include <stdlib.h>
+#include <ctime>
 #include "Eigen/Dense"
 #include "ukf.h"
 #include "ground_truth_package.h"
@@ -165,12 +166,24 @@ int main(int argc, char* argv[]) {
   // Formatter for Vectors
   Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", "");
 
+  clock_t start, stop;
+  double mtime;
+
   for (size_t k = 0; k < number_of_measurements; ++k) {
 
     std::cout << k << ": MR = " << measurement_pack_list[k] << std::endl;
 
+    // Measure execution time
+    start = clock();
+
     // Call the UKF-based fusion
     ukf.ProcessMeasurement(measurement_pack_list[k]);
+
+    // Show exec time
+    stop = clock();
+    mtime = (stop - start) / (double)CLOCKS_PER_SEC;
+    std::cout << mtime << " secs"  << std::endl;
+
 
     std::cout << "GT = " << gt_pack_list[k] << std::endl;
     std::cout << "=====================================" << std::endl;
