@@ -11,6 +11,8 @@ using std::vector;
 Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", "");
 Eigen::IOFormat fmtm(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", "\n", "", "", "", "");
 
+//#define DEBUG 1
+
 /**
  * Initializes Unscented Kalman filter
  */
@@ -65,7 +67,7 @@ UKF::UKF() {
   std_radrd_ = 0.3;
 
   /**
-  TODO:
+  TODO: - DONE
 
   Complete the initialization. See ukf.h for other member properties.
 
@@ -95,7 +97,7 @@ UKF::~UKF() {}
  */
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   /**
-  TODO:
+  TODO: - DONE
 
   Complete this function! Make sure you switch between lidar and radar
   measurements.
@@ -126,9 +128,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
             0,     0,   0,       0.5,   0,
             0,     0,   0,       0,     0.5;
 
+#ifdef DEBUG
     std::cout << "First Measurement Initialized:" << std::endl;
     std::cout << "x_ = " << x_.format(fmt) << std::endl;
     std::cout << "P_ = " << P_ << std::endl;
+#endif
 
     time_us_ = meas_package.timestamp_;
 
@@ -140,7 +144,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   double delta_t = (meas_package.timestamp_ - time_us_) / 1000000.0;
   time_us_ = meas_package.timestamp_;
 
+#ifdef DEBUG
   std::cout << "delta_t = " << delta_t << " secs" << std::endl;
+#endif
 
   while (delta_t > 0.1) {
 //    std::cout << "====== small step ======" << std::endl;
@@ -150,14 +156,16 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   }
   Prediction(delta_t);
 
-  if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+  if (meas_package.sensor_type_ == MeasurementPackage::LASER && use_laser_) {
     UpdateLidar(meas_package);
-  } else if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+  } else if (meas_package.sensor_type_ == MeasurementPackage::RADAR && use_radar_) {
     UpdateRadar(meas_package);
   }
 
+#ifdef DEBUG
   std::cout << "P_ = " << std::endl << P_.format(fmtm) << std::endl;
   std::cout << "x_ = " << x_.format(fmt) << std::endl;
+#endif
 
 //  std::cout << "<<<<<<< end update <<< " << std::endl;
 
@@ -170,7 +178,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  */
 void UKF::Prediction(double delta_t) {
   /**
-  TODO:
+  TODO: - DONE
 
   Complete this function! Estimate the object's location. Modify the state
   vector, x_. Predict sigma points, the state, and the state covariance matrix.
@@ -315,7 +323,7 @@ void UKF::Prediction(double delta_t) {
  */
 void UKF::UpdateLidar(MeasurementPackage meas_package) {
   /**
-  TODO:
+  TODO: - DONE
 
   Complete this function! Use lidar data to update the belief about the object's
   position. Modify the state vector, x_, and covariance, P_.
@@ -323,7 +331,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   You'll also need to calculate the lidar NIS.
   */
 
+#ifdef DEBUG
   std::cout << "---- UpdateLidar ---- " << std::endl;
+#endif
 
   int n_z = 2;
 
@@ -349,8 +359,10 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
     Z_pred += weights_(i) * Zsig_pred.col(i);
   }
 
+#ifdef DEBUG
 //  std::cout << "Zsig = " << std::endl << Zsig_pred.format(fmtm) << std::endl;
   std::cout << "Z_pred = " << Z_pred.format(fmt) << std::endl;
+#endif
 
   // Predicted measurement covariance
   MatrixXd S(n_z, n_z);
@@ -383,7 +395,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   MatrixXd Si = S.inverse();
   MatrixXd K = Tc * Si;
 
+#ifdef DEBUG
   std::cout << "K = " << std::endl << K.format(fmtm) << std::endl;
+#endif
 
   // Update state and covariance
   VectorXd y = z - Z_pred;
@@ -392,7 +406,10 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   NIS_laser_ = y.transpose() * Si * y;
 
+#ifdef DEBUG
   std::cout << "<<<<< UpdateLidar ENDS ---- NIS = " << NIS_laser_ << std::endl;
+#endif
+
 }
 
 /**
@@ -401,7 +418,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
  */
 void UKF::UpdateRadar(MeasurementPackage meas_package) {
   /**
-  TODO:
+  TODO: - DONE
 
   Complete this function! Use radar data to update the belief about the object's
   position. Modify the state vector, x_, and covariance, P_.
@@ -409,7 +426,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   You'll also need to calculate the radar NIS.
   */
 
+#ifdef DEBUG
   std::cout << "---- UpdateRadar ---- " << std::endl;
+#endif
 
   int n_z = 3;
 
@@ -454,9 +473,10 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   while (Z_pred(1) < -M_PI) Z_pred(1) += 2. * M_PI;
   while (Z_pred(1) > M_PI) Z_pred(1) -= 2. * M_PI;
 
-
+#ifdef DEBUG
 //  std::cout << "Zsig = " << std::endl << Zsig_pred.format(fmtm) << std::endl;
   std::cout << "Z_pred = " << Z_pred.format(fmt) << std::endl;
+#endif
 
   // Predicted measurement covariance
   MatrixXd S(n_z, n_z);
@@ -502,7 +522,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   MatrixXd Si = S.inverse();
   MatrixXd K = Tc * Si;
 
+#ifdef DEBUG
   std::cout << "K = " << std::endl << K.format(fmtm) << std::endl;
+#endif
 
   // Update state and covariance
   VectorXd y = z - Z_pred;
@@ -521,7 +543,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   NIS_radar_ = y.transpose() * Si * y;
 
+#ifdef DEBUG
   std::cout << "<<<<< UpdateRadar ENDS ----, NIS = " << NIS_radar_ << std::endl;
+#endif
 
 
 }

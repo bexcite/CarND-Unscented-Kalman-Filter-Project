@@ -15,6 +15,8 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
+//#define DEBUG 1
+
 void check_arguments(int argc, char* argv[]) {
   string usage_instructions = "Usage instructions: ";
   usage_instructions += argv[0];
@@ -171,22 +173,27 @@ int main(int argc, char* argv[]) {
 
   for (size_t k = 0; k < number_of_measurements; ++k) {
 
+#ifdef DEBUG
     std::cout << k << ": MR = " << measurement_pack_list[k] << std::endl;
 
     // Measure execution time
     start = clock();
+#endif
+
 
     // Call the UKF-based fusion
     ukf.ProcessMeasurement(measurement_pack_list[k]);
 
+
+#ifdef DEBUG
     // Show exec time
     stop = clock();
     mtime = (stop - start) / (double)CLOCKS_PER_SEC;
     std::cout << mtime << " secs"  << std::endl;
 
-
     std::cout << "GT = " << gt_pack_list[k] << std::endl;
     std::cout << "=====================================" << std::endl;
+#endif
 
     // output the estimation
     out_file_ << ukf.x_(0) << "\t"; // pos1 - est

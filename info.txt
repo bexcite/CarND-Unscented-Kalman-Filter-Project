@@ -4,7 +4,7 @@ https://paper.dropbox.com/doc/Unscented-Kalman-Filter-Project-HWZtN7Ak9Ys7ThiScH
 
 https://discussions.udacity.com/t/numerical-instability-of-the-implementation/230449/9
 
+http://dcsl.gatech.edu/papers/jgcd14bF.pdf
+
 TODO:
-- make it works for data-2 file
-- NIS exploration
 -
